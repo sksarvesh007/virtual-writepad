@@ -1,0 +1,1 @@
+cv2.rectangle(img , (x1,y1) , (x2,y2) , drawcolor , cv2.FILLED)
