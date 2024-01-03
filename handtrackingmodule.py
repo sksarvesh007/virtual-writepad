@@ -16,6 +16,7 @@ class handDetector():
         self.complexity = complexity
         self.hands = self.mpHands.Hands(self.mode, self.maxHands, self.complexity, self.detectionCon, self.trackCon)        
         self.mpdraw = mp.solutions.drawing_utils 
+        self.tipids=[4,8,12,16,20]
     
     def findhands(self , img , draw=True):
         imgRGB=cv2.cvtColor(img , cv2.COLOR_BGR2RGB) #converting the image to rgb because it only detects rgb images
@@ -30,18 +31,29 @@ class handDetector():
     
     
     def findPosition(self , img , handNo=0 ,draw=True ):
-        lmlist=[]
+        self.lmlist=[]
         if self.results.multi_hand_landmarks:
             myhand = self.results.multi_hand_landmarks[handNo]
             for id , lm in enumerate(myhand.landmark):
                 #print(id,lm)
                 h , w , c = img.shape
                 cx , cy = int(lm.x*w) , int(lm.y*h)
-                lmlist.append([id , cx , cy])
+                self.lmlist.append([id , cx , cy])
                 if draw:
-                    cv2.circle(img , (cx,cy) , 15 , (255,0,259) , cv2.FILLED)
-        return lmlist
-
+                    cv2.circle(img , (cx,cy) , 5 , (0,0,255) , cv2.FILLED)
+        return self.lmlist
+    def fingersup(self):
+        fingers = []
+        if self.lmlist[self.tipids[0]][1]<self.lmlist[self.tipids[0]-1][1]:
+            fingers.append(1)
+        else :
+            fingers.append(0)
+        for id in range(1,5):
+            if self.lmlist[self.tipids[id]][2]<self.lmlist[self.tipids[id]-2][2]:
+                fingers.append(1)
+            else :
+                fingers.append(0)
+        return fingers
 
 def main():
     pTime=0
@@ -52,9 +64,6 @@ def main():
         success , img = cap.read()
         img = detector.findhands(img )
         lmlist = detector.findPosition(img)
-        
-        if len(lmlist)!=0:
-            print(lmlist[4])
         cTime=time.time()
         fps=1/(cTime-pTime)
         pTime=cTime
@@ -63,7 +72,8 @@ def main():
         cv2.imshow("IMAGE" , img)
         #this loop is for the fps 
         #if we press escape the loop exits and the camera closes
-        cv2.waitKey(1)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
 
 if __name__ == "__main__":
